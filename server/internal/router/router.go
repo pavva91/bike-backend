@@ -14,8 +14,13 @@ func NewRouter() {
 }
 
 func initializeRoutes() {
-	files := Router.PathPrefix("/accounts").Subrouter()
-	files.HandleFunc("", handlers.AccountsHandler.List).Methods("GET")
-	files.HandleFunc("/", handlers.AccountsHandler.List).Methods("GET")
-	files.HandleFunc("/{id:[0-9]+}", handlers.AccountsHandler.GetByID).Methods("GET")
+	accounts := Router.PathPrefix("/accounts").Subrouter()
+	accounts.HandleFunc("", handlers.AccountsHandler.List).Methods("GET")
+	accounts.HandleFunc("/", handlers.AccountsHandler.List).Methods("GET")
+	accounts.HandleFunc("/{id:[0-9]+}", handlers.AccountsHandler.GetByID).Methods("GET")
+
+	accountTypes := Router.PathPrefix("/atypes").Subrouter()
+	accountTypes.HandleFunc("", handlers.AccountTypesHandler.List).Methods("GET")
+	accountTypes.HandleFunc("/", handlers.AccountTypesHandler.List).Methods("GET")
+	accountTypes.HandleFunc("/{id:[0-9]+}", handlers.AccountTypesHandler.GetByID).Methods("GET")
 }
