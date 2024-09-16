@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"github.com/pavva91/bike-backend/server/config"
@@ -23,6 +23,10 @@ import (
 //	@title			Bike Tour Server
 //	@version		1.0
 //	@description	HTTP Bike Tour Server
+
+type Env struct {
+	DB *sql.DB
+}
 
 // @host	localhost:8080
 func main() {
@@ -63,19 +67,13 @@ func mainNoExit() error {
 	if useEnvVar == "true" {
 		config.Values.Server.Host = os.Getenv("SERVER_HOST")
 		config.Values.Server.Port = os.Getenv("SERVER_PORT")
-		bulkUploadMaxSize, err := strconv.Atoi(os.Getenv("MAX_BULK_UPLOAD_SIZE"))
-		if err != nil {
-			log.Println("insert int value for max size of bulk upload")
-			return err
-		}
-		config.Values.Server.MaxBulkUploadSize = bulkUploadMaxSize
-		fileUploadMaxSize, err := strconv.Atoi(os.Getenv("MAX_UPLOAD_FILE_SIZE"))
-		if err != nil {
-			log.Println("insert int value for max size of file upload")
-			return err
-		}
-		config.Values.Server.MaxUploadFileSize = fileUploadMaxSize
-		config.Values.Server.UploadFolder = os.Getenv("UPLOAD_FOLDER")
+		config.Values.Database.Host = os.Getenv("DB_HOST")
+		config.Values.Database.Port = os.Getenv("DB_PORT")
+		config.Values.Database.Name = os.Getenv("DB_NAME")
+		config.Values.Database.Username = os.Getenv("DB_USERNAME")
+		config.Values.Database.Password = os.Getenv("DB_PASSWORD")
+		config.Values.Database.Connections = os.Getenv("DB_CONNECTIONS")
+		config.Values.Database.Timezone = os.Getenv("DB_TIMEZONE")
 	} else {
 		env := os.Getenv("SERVER_ENVIRONMENT")
 
@@ -102,6 +100,13 @@ func mainNoExit() error {
 
 	// connect to db
 	db.MustConnectToDB(config.Values)
+	defer db.DB.Close()
+
+	err := db.DB.Ping()
+	if err != nil {
+		log.Println(err.Error())
+		panic(fmt.Errorf("error pinging db: %w", err))
+	}
 
 	// run the server
 	fmt.Printf("Server is running on port %s\n", config.Values.Server.Port)
@@ -140,7 +145,7 @@ func mainNoExit() error {
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	err := srv.Shutdown(ctx)
+	err = srv.Shutdown(ctx)
 	if err != nil {
 		err = fmt.Errorf("error shutting down gracefully, panic: %s", err.Error())
 		return err

@@ -14,7 +14,6 @@ require (
 
 require (
 	github.com/lib/pq v1.10.9 // indirect
-	github.com/pavva91/merkle-tree/libs/merkletree v0.0.0 // indirect
 )
 
 require (
@@ -41,5 +40,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.4 // indirect
 )
-
-replace github.com/pavva91/merkle-tree/libs/merkletree v0.0.0 => ../libs/merkletree

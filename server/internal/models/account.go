@@ -1,12 +1,8 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
-
-type AccountGorm struct {
-	gorm.Model    `swaggerignore:"true"`
-	FirstName     string
-	LastName      string
+type Account struct {
+	ID            uint
+	Firstname     string
+	Lastname      string
 	AccountTypeID uint
 }
