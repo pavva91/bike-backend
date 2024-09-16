@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 
 	"github.com/pavva91/bike-backend/server/internal/models"
 	"github.com/pavva91/bike-backend/server/internal/repositories"
@@ -12,6 +13,7 @@ var Account Accounter = account{}
 
 type Accounter interface {
 	List() ([]models.Account, error)
+	GetByID(id uint) (*models.Account, error)
 }
 
 type account struct{}
@@ -24,4 +26,11 @@ func (s account) List() ([]models.Account, error) {
 	}
 
 	return accounts, err
+}
+
+func (s account) GetByID(id uint) (*models.Account, error) {
+	strID := strconv.Itoa(int(id))
+	account, err := repositories.Account.GetByID(strID)
+
+	return account, err
 }

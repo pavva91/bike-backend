@@ -23,9 +23,9 @@ func BadRequestHandler(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
-func NotFoundHandler(w http.ResponseWriter, r *http.Request, err error) {
+func NotFoundHandler(w http.ResponseWriter, r *http.Request, errMsg string) {
 	w.WriteHeader(http.StatusNotFound)
-	_, err = w.Write([]byte(err.Error()))
+	_, err := w.Write([]byte(errMsg))
 	if err != nil {
 		log.Println(err.Error())
 		return
