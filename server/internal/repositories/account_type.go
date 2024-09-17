@@ -12,6 +12,7 @@ var (
 type AccountTyper interface {
 	List() ([]models.AccountType, error)
 	GetByID(id string) (*models.AccountType, error)
+	GetByIDJoin(id string) (*models.AccountType, error)
 }
 
 type accountType struct{}
@@ -43,13 +44,40 @@ func (r accountType) List() ([]models.AccountType, error) {
 	return accounts, nil
 }
 
-func (r accountType) GetByID(id string) (*models.AccountType, error) {
-	var account models.AccountType
-	row := db.DB.QueryRow("SELECT * FROM account_type WHERE id=$1", id)
+func (r accountType) GetByIDJoin(id string) (*models.AccountType, error) {
+	accountType := &models.AccountType{}
 
-	err := row.Scan(&account.ID, &account.Name)
+	rows, err := db.DB.Query("SELECT account_type.id, account_type.name, account.first_name, account.last_name, account.id FROM account_type JOIN account ON account_type.id = account.account_type_id WHERE account_type.id=$1", id)
 	if err != nil {
 		return nil, err
 	}
-	return &account, nil
+
+	for rows.Next() {
+
+		account := &models.Account{}
+
+		err := rows.Scan(&accountType.ID, &accountType.Name, &account.Firstname, &account.Lastname, &account.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		accountType.Accounts = append(accountType.Accounts, *account)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accountType, nil
+}
+
+func (r accountType) GetByID(id string) (*models.AccountType, error) {
+	var accountType models.AccountType
+	row := db.DB.QueryRow("SELECT * FROM account_type WHERE id=$1", id)
+
+	err := row.Scan(&accountType.ID, &accountType.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &accountType, nil
 }

@@ -82,7 +82,7 @@ func (h accountTypesHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	id := uint(i)
 
-	accountType, err := services.AccountType.GetByID(id)
+	accountType, err := services.AccountType.GetByIDJoin(id)
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -99,6 +99,65 @@ func (h accountTypesHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	var res dto.AccountTypeResponse
 	res.ToDTO(*accountType)
+
+	js, err := json.Marshal(res)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(js)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+}
+
+// Get godoc
+//
+//	@Summary		List all the accounts of a type
+//	@Description	Given an accountTypeID list all the accounts of that type
+//	@Tags			AccountTypes
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"AccountType ID"	Format(integer)
+//	@Success		200	{object}	dto.AccountResponse
+//	@Failure		400	{object}	string
+//	@Failure		404	{object}	string
+//	@Failure		500	{object}	string
+//	@Router			/accounts/atypes/{id} [get]
+func (h accountTypesHandler) ListAccountsOfTypeByID(w http.ResponseWriter, r *http.Request) {
+	strID := mux.Vars(r)["id"]
+
+	i, err := strconv.Atoi(strID)
+	if err != nil {
+		log.Println(err)
+		errorhandlers.BadRequestHandler(w, r, errors.New("insert valid id"))
+		return
+	}
+	id := uint(i)
+
+	accountType, err := services.AccountType.GetByIDJoin(id)
+	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			msg := fmt.Sprintf("account type with id %s not found", strID)
+			errorhandlers.NotFoundHandler(w, r, msg)
+			return
+		}
+
+		log.Println(err.Error())
+		errorhandlers.InternalServerErrorHandler(w, r)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var re dto.AccountResponse
+	res := re.ToDTOs(accountType.Accounts)
 
 	js, err := json.Marshal(res)
 	if err != nil {
