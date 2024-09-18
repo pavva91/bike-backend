@@ -19,7 +19,7 @@ type AccountTyper interface {
 type accountType struct{}
 
 func (s accountType) List() ([]models.AccountType, error) {
-	accountTypes, err := repositories.AccountType.List()
+	accountTypes, err := repositories.AccountType.ListJoinAccount()
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return []models.AccountType{}, nil

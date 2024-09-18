@@ -11,6 +11,7 @@ var (
 
 type AccountTyper interface {
 	List() ([]models.AccountType, error)
+	ListJoinAccount() ([]models.AccountType, error)
 	GetByID(id string) (*models.AccountType, error)
 	GetByIDJoin(id string) (*models.AccountType, error)
 }
@@ -24,10 +25,9 @@ func (r accountType) List() ([]models.AccountType, error) {
 	}
 	defer rows.Close()
 
-	var accounts []models.AccountType
+	var accountTypes []models.AccountType
 
 	for rows.Next() {
-		// log.Println(rows)
 		var account models.AccountType
 
 		err := rows.Scan(&account.ID, &account.Name)
@@ -35,13 +35,13 @@ func (r accountType) List() ([]models.AccountType, error) {
 			return nil, err
 		}
 
-		accounts = append(accounts, account)
+		accountTypes = append(accountTypes, account)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return accounts, nil
+	return accountTypes, nil
 }
 
 func (r accountType) GetByIDJoin(id string) (*models.AccountType, error) {
@@ -69,6 +69,45 @@ func (r accountType) GetByIDJoin(id string) (*models.AccountType, error) {
 	}
 
 	return accountType, nil
+}
+
+func (r accountType) ListJoinAccount() ([]models.AccountType, error) {
+	var (
+		accountTypeID        uint
+		accountTypeName         string
+		accountFirstname         string
+		accountLastname         string
+		accountID         uint
+		accountType *models.AccountType
+		result      []models.AccountType
+	)
+
+	rows, err := db.DB.Query("SELECT account_type.id, account_type.name, account.first_name, account.last_name, account.id FROM account_type JOIN account ON account_type.id = account.account_type_id ORDER BY account_type.id")
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&accountTypeID, &accountTypeName, &accountFirstname, &accountLastname, &accountID)
+		if err != nil {
+			return nil, err
+		}
+		if accountType != nil && accountType.ID == accountTypeID {
+			account := &models.Account{
+				Firstname: accountFirstname,
+				Lastname:  accountLastname,
+				ID:        accountID,
+			}
+			accountType.Accounts = append(accountType.Accounts, *account)
+		} else {
+			accountType = &models.AccountType{
+				ID:   accountTypeID,
+				Name: accountTypeName,
+			}
+			result = append(result, *accountType)
+		}
+	}
+	return result, nil
 }
 
 func (r accountType) GetByID(id string) (*models.AccountType, error) {
